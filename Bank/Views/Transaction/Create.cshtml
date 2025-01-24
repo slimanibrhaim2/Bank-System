@@ -1,0 +1,67 @@
+﻿@model Bank.DTOs.TransactionDTO
+@{
+ViewData["Title"] = "Create Transaction";
+}
+
+<h2>Create Transaction</h2>
+
+<form asp-controller="Transaction" asp-action="Create">
+    <div class="form-horizontal">
+        <h4>Transaction</h4>
+        <hr />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="form-group">
+            <label class="control-label">Account Number</label>
+            <!-- Display account number but make it non-editable -->
+            <div>@Model.AccountNumber</div>
+            <!-- Hidden field to send the AccountNumber with the form -->
+            <input type="hidden" asp-for="AccountNumber" value="@Model.AccountNumber" />
+            <span asp-validation-for="AccountNumber" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="TransactionTypeName" class="control-label"></label>
+            <select asp-for="TransactionTypeName" class="form-control" onchange="toggleRecipientField(this.value)">
+                <option value="">-- Select Transaction Type --</option>
+                <option value="Deposit">Deposit</option>
+                <option value="Withdraw">Withdraw</option>
+                <option value="Transfer">Transfer</option>
+            </select>
+            <span asp-validation-for="TransactionTypeName" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Amount" class="control-label"></label>
+            <input asp-for="Amount" class="form-control" />
+            <span asp-validation-for="Amount" class="text-danger"></span>
+        </div>
+
+        <div class="form-group" id="recipientField" style="display: none;">
+            <label asp-for="RecipientAccountNumber" class="control-label"></label>
+            <input asp-for="RecipientAccountNumber" class="form-control" />
+            <span asp-validation-for="RecipientAccountNumber" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Create" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+</form>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+<script>
+    function toggleRecipientField(transactionType) {
+        var recipientField = document.getElementById("recipientField");
+        if (transactionType === "Transfer") {
+            recipientField.style.display = "block";
+        } else {
+            recipientField.style.display = "none";
+        }
+    }
+</script>
