@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using Bank.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bank.Context;
 
-public partial class MyDbContext: DbContext
+public partial class MyDbContext: IdentityDbContext<User, IdentityRole<long>, long>
 {
     public MyDbContext()
     {
@@ -32,6 +34,8 @@ public partial class MyDbContext: DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Account>(entity =>
         {
             entity.Property(e => e.CreateAt).HasColumnType("datetime");
@@ -63,8 +67,27 @@ public partial class MyDbContext: DbContext
         {
             entity.Property(e => e.TransactionTypeId).ValueGeneratedNever();
             entity.Property(e => e.Name)
-                .HasMaxLength(10)
-                .IsFixedLength();
+                .HasMaxLength(10);
+
+            entity.HasData(
+                new List<TransactionType>()
+                {
+                    new TransactionType()
+                    {
+                        TransactionTypeId = 1,
+                        Name = "Deposit"
+                    },
+                    new TransactionType()
+                    {
+                        TransactionTypeId = 2,
+                        Name = "Withdraw"
+                    },
+                    new TransactionType()
+                    {
+                        TransactionTypeId = 3,
+                        Name = "Transfer"
+                    }
+                });
         });
 
         modelBuilder.Entity<TransferBetweenAccount>(entity =>
@@ -89,16 +112,10 @@ public partial class MyDbContext: DbContext
         modelBuilder.Entity<User>(entity =>
         {
             entity.ToTable("User");
-
             entity.Property(e => e.Address).HasMaxLength(100);
             entity.Property(e => e.CreateAt).HasColumnType("datetime");
-            entity.Property(e => e.Password).HasMaxLength(100);
-            entity.Property(e => e.Phone).HasMaxLength(15);
-            entity.Property(e => e.UserEmail).HasMaxLength(50);
             entity.Property(e => e.UserName).HasMaxLength(50);
         });
-
-        OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

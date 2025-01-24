@@ -5,10 +5,14 @@
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Logging;
     using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.CodeAnalysis.Elfie.Serialization;
 
     namespace Bank.Controllers
     {
+        
+        [Authorize]
+
         public class TransactionController : Controller
         {
             protected readonly MyDbContext _context;
@@ -21,13 +25,14 @@
             }
 
             // GET: Transactions
-            public async Task<IActionResult> Index(long acountId)
+            public async Task<IActionResult> Index(long accountId)
             {
                 var transactions = await _context.Transactions
                     .Include(t => t.Account)
                     .Include(t => t.TransactionType)
-                    .Where(t => t.AccountId == acountId) 
+                    .Where(t => t.AccountId == accountId) 
                     .ToListAsync();
+                ViewBag.AccountId = accountId;
                 Console.WriteLine("\n\n" + transactions.Count);
                 return View(transactions);
             }
@@ -36,6 +41,11 @@
             public IActionResult Create(long accountId)
             {
                 var account = _context.Accounts.Find(accountId);
+                if (account == null)
+                {
+                    return NotFound();
+                }
+                
                 var accountNumber = account.AccountNumber;
                 TransactionDTO dto = new TransactionDTO();
                 dto.AccountNumber = accountNumber;
@@ -68,11 +78,11 @@ public async Task<IActionResult> Create(TransactionDTO transactionDto)
 
         Console.WriteLine($"Transaction Type from DB: '{transactionType.Name}'");
         Console.WriteLine($"Expected: 'Withdraw', Actual: '{transactionType.Name}'");
-        Console.WriteLine("Is Transaction Type Withdraw: " + (transactionType.Name == "Withdraw  "));
+        Console.WriteLine("Is Transaction Type Withdraw: " + (transactionType.Name == "Withdraw"));
         Console.WriteLine("Is Account Balance Less Than Amount: " + (account.Balance < transactionDto.Amount));
-
+        
         // Ensure sufficient balance for Withdraw and Transfer
-        if ((transactionType.Name == "Withdraw  " || transactionType.Name == "Transfer  ") && account.Balance < transactionDto.Amount)
+        if ((transactionType.Name == "Withdraw" || transactionType.Name == "Transfer") && account.Balance < transactionDto.Amount)
         {
             Console.WriteLine($"Insufficient funds: Account Balance = {account.Balance}, Amount = {transactionDto.Amount}");
             ModelState.AddModelError("Amount", "Insufficient balance for this transaction.");
@@ -80,7 +90,7 @@ public async Task<IActionResult> Create(TransactionDTO transactionDto)
         }
 
         // Handle Transfer
-        if (transactionType.Name == "Transfer  ")
+        if (transactionType.Name == "Transfer")
         {
             if (!transactionDto.RecipientAccountNumber.HasValue)
             {
@@ -101,12 +111,12 @@ public async Task<IActionResult> Create(TransactionDTO transactionDto)
 
             _context.Update(recipientAccount);
         }
-        else if (transactionType.Name == "Withdraw  ")
+        else if (transactionType.Name == "Withdraw")
         {
             // Deduct from sender
             account.Balance -= transactionDto.Amount;
         }
-        else if (transactionType.Name == "Deposit   ")
+        else if (transactionType.Name == "Deposit")
         {
             // Add to sender
             account.Balance += transactionDto.Amount;

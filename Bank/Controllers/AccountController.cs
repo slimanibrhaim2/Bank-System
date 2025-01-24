@@ -1,11 +1,16 @@
-﻿using Bank.Context;
+﻿using System.Security.Claims;
+using Bank.Context;
 using Bank.DTOs;
 using Bank.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bank.Controllers
 {
+    
+    [Authorize]
+
     public class AccountController : Controller
     {
         protected readonly MyDbContext _context;
@@ -19,10 +24,12 @@ namespace Bank.Controllers
 
         public async Task<IActionResult> Index()
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             var accounts = await _context.Accounts.ToListAsync();
             foreach (var account in accounts)
             {
-                account.User = _context.Users.FirstOrDefault(u => u.UserId == account.UserId);
+                account.User = _context.Users.FirstOrDefault(u => u.Id == account.UserId)!;
             }
             return View(accounts);
         }
@@ -40,7 +47,7 @@ namespace Bank.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = _context.Users.FirstOrDefault(u => u.UserEmail == accountdto.UserEmail);
+                var user = _context.Users.FirstOrDefault(u => u.Email == accountdto.UserEmail);
                 if (user == null)
                 {
                     ModelState.AddModelError("UserEmail", "No user found with the provided email.");
@@ -49,7 +56,7 @@ namespace Bank.Controllers
 
                 Account account = new Account
                 {
-                    UserId = user.UserId,
+                    UserId = user.Id,
                     AccountNumber = accountdto.AccountNumber,
                     CreateAt = DateTime.Now
                 };
